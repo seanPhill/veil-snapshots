@@ -2,10 +2,12 @@
 # Downloads the latest Veil snapshot release, verifies every file, and unpacks
 # it into the Veil data directory. Run it with the wallet closed.
 #
-# Usage: restore.sh [--testnet] [--datadir <path>] [--tag <tag>] [--check] [--yes]
+# Usage: restore.sh [--testnet] [--datadir <path>] [--tag <tag>] [--repo <o/r>]
+#                   [--check] [--yes]
 #   --testnet  restore testnet instead of mainnet
 #   --datadir  target data directory (default: the platform's standard one)
 #   --tag      restore a specific release instead of the latest
+#   --repo     pull from a mirror instead of the default publisher
 #   --check    verify tools and show the plan, download nothing big
 #   --yes      no prompts, assume yes (for scripted use)
 
@@ -16,6 +18,9 @@ set -euo pipefail
 SCRIPT_VERSION=2
 
 REPO="ohcee/veil-snapshots"
+# the version check always asks the default publisher, so a mirror that lags
+# behind cannot tell you your script is current when it is not
+HOME_REPO="$REPO"
 
 DATADIR=""
 TAG=""
@@ -27,11 +32,16 @@ while [ $# -gt 0 ]; do
         --testnet) TESTNET=1; shift ;;
         --datadir) DATADIR="$2"; shift 2 ;;
         --tag)     TAG="$2"; shift 2 ;;
+        --repo)    REPO="$2"; shift 2 ;;
         --check)   CHECK=1; shift ;;
         --yes)     YES=1; shift ;;
         *) echo "unknown option: $1" >&2; exit 2 ;;
     esac
 done
+case "$REPO" in
+    */*) : ;;
+    *) echo "ERROR: --repo wants owner/name, got '$REPO'" >&2; exit 2 ;;
+esac
 
 if [ -z "$DATADIR" ]; then
     if [ "$(uname)" = "Darwin" ]; then
@@ -114,7 +124,7 @@ dl() {
 check_version() {
     local body latest="" line
     body=$(curl -fsSL --http1.1 --max-time 10 \
-        "https://raw.githubusercontent.com/$REPO/main/restore.sh" 2>/dev/null) || return 0
+        "https://raw.githubusercontent.com/$HOME_REPO/main/restore.sh" 2>/dev/null) || return 0
     # parsed without a pipe on purpose: an early-exiting grep would SIGPIPE
     # curl, and pipefail would turn that into a silent failure
     while IFS= read -r line; do
@@ -132,7 +142,7 @@ EOF
         echo
         say "heads up: you are running restore.sh v$SCRIPT_VERSION, v$latest is published."
         say "this script does not update itself. To get the newest one:"
-        say "  curl -fsSL -o restore.sh https://raw.githubusercontent.com/$REPO/main/restore.sh"
+        say "  curl -fsSL -o restore.sh https://raw.githubusercontent.com/$HOME_REPO/main/restore.sh"
         say "continuing with your copy in 5 seconds, Ctrl-C to stop and update"
         echo
         sleep 5

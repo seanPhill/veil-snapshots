@@ -21,11 +21,13 @@
 # fires first each quarter publishes and everyone else's run exits clean.
 # Mainnet and testnet are tracked separately, so one never blocks the other.
 #
-# Usage: build-snapshot.sh [--testnet] [--dry-run] [--no-publish] [--force]
+# Usage: build-snapshot.sh [--testnet] [--dry-run] [--no-publish] [--force] [--keep]
 #   --testnet     snapshot testnet instead of mainnet
 #   --dry-run     check environment and node, print capture metadata, change nothing
 #   --no-publish  build the archive locally but skip the github release
 #   --force       build even when a recent release already exists
+#   --keep        leave the built parts on disk after uploading, for seeding
+#                 a torrent or copying to a mirror
 #
 # On a node managed by systemd, point the stop and start commands at the unit:
 #   STOP_CMD="systemctl stop veild" START_CMD="systemctl start veild" ./build-snapshot.sh --testnet
@@ -61,12 +63,14 @@ DRY_RUN=0
 PUBLISH=1
 FORCE=0
 TESTNET=0
+KEEP=0
 for arg in "$@"; do
     case "$arg" in
         --testnet)    TESTNET=1 ;;
         --dry-run)    DRY_RUN=1 ;;
         --no-publish) PUBLISH=0 ;;
         --force)      FORCE=1 ;;
+        --keep)       KEEP=1 ;;
         *) echo "unknown option: $arg" >&2; exit 2 ;;
     esac
 done
@@ -421,5 +425,11 @@ URL=$(gh release view "$TAG" -R "$REPO" --json url -q .url)
 log "release published: $URL"
 
 cd "$SCRIPT_DIR"
-rm -rf "$OUT"
-log "local build files cleaned up, done"
+if [ "$KEEP" = 1 ]; then
+    log "keeping the built files in $OUT (--keep)"
+    log "for seeding these as a torrent, see the README section 'Seeding a torrent'"
+    log "done"
+else
+    rm -rf "$OUT"
+    log "local build files cleaned up, done"
+fi

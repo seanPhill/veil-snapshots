@@ -190,6 +190,22 @@ If the node is managed by systemd, hand the script the unit rather than letting 
 STOP_CMD="systemctl stop veild" START_CMD="systemctl start veild" ./build-snapshot.sh --testnet
 ```
 
+### Seeding a torrent
+
+By default the build deletes its parts once they are on GitHub. Pass `--keep` to leave them in the work directory instead, which is what you want if you also intend to seed them.
+
+The useful trick is that the release download URLs work as **webseeds**, so a torrent made from these files pulls from GitHub as well as from any peers. People with a torrent client get the resilience and resume behaviour of BitTorrent, and the swarm never dies even with zero seeders, because GitHub is always serving.
+
+```bash
+cd work/veil-mainnet-h<height>
+transmission-create -o veil-mainnet-h<height>.torrent \
+    -w https://github.com/<owner>/veil-snapshots/releases/download/mainnet-h<height>/ \
+    -t udp://tracker.opentrackr.org:1337/announce \
+    .
+```
+
+`mktorrent -w <url>` does the same thing if you prefer it. Attach the resulting `.torrent` to the release so people can find it next to the parts it describes.
+
 ### Run a builder
 
 This pipeline is not meant to have an owner. Anyone with a synced node can run a builder, on either chain, and several people running one at once is the point, that's the redundancy:
@@ -209,7 +225,7 @@ Rough sizes, so you know what disk you need. Mainnet is 28GB on disk and compres
 
 Snapshots are built quarterly, on the 1st of January, April, July and October. A few months of staleness is fine, the wallet just syncs the tail.
 
-On macOS the schedule runs as a LaunchAgent, since macOS blocks `crontab` unless the terminal has Full Disk Access. The plist lives at `~/Library/LaunchAgents/org.veil.snapshots.plist` (see [launchd.plist](org.veil.snapshots.plist) in this repo) and loads with:
+On macOS use a LaunchAgent rather than cron, since macOS blocks `crontab` unless the terminal has Full Disk Access. Copy [`org.veil.snapshots.plist`](org.veil.snapshots.plist) from this repo to `~/Library/LaunchAgents/`, edit the paths inside it to match your setup, then load it with:
 
 ```bash
 launchctl bootstrap gui/$(id -u) ~/Library/LaunchAgents/org.veil.snapshots.plist
