@@ -197,12 +197,14 @@ By default the build deletes its parts once they are on GitHub. Pass `--keep` to
 The useful trick is that the release download URLs work as **webseeds**, so a torrent made from these files pulls from GitHub as well as from any peers. People with a torrent client get the resilience and resume behaviour of BitTorrent, and the swarm never dies even with zero seeders, because GitHub is always serving.
 
 ```bash
-cd work/veil-mainnet-h<height>
+cd $WORKDIR
 transmission-create -o veil-mainnet-h<height>.torrent \
     -w https://github.com/<owner>/veil-snapshots/releases/download/mainnet-h<height>/ \
     -t udp://tracker.opentrackr.org:1337/announce \
-    .
+    veil-mainnet-h<height>/
 ```
+We create the torrent from above the subdirectory containing the snapshots so that the created .torrent file will use that for the name rather than having a single dot as the name.
+We'll need to make sure that the snapshots are actually created in (or moved into) that named subdirectory for this torrent creation process to work correctly. Also it will be strongly recommended that people turn off "public" IP networks and turn on I2P and Tor. The web seed should still work, as it's not a peer to peer connection.
 
 `mktorrent -w <url>` does the same thing if you prefer it. Attach the resulting `.torrent` to the release so people can find it next to the parts it describes.
 
