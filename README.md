@@ -1,6 +1,6 @@
 # Veil mainnet snapshots
 
-Six-monthly snapshots of the Veil mainnet blockchain so a fresh wallet can skip syncing from genesis. Download the latest release, verify it, unpack it into your data directory, and the wallet only has to sync the weeks since the snapshot instead of years of history.
+Quarterly snapshots of the Veil mainnet blockchain so a fresh wallet can skip syncing from genesis. Download the latest release, verify it, unpack it into your data directory, and the wallet only has to sync the weeks since the snapshot instead of years of history.
 
 Each release contains the `blocks`, `chainstate`, `indexes` and `zerocoin` folders from a fully synced node, compressed with zstd and split into parts under 2GB. Snapshots never contain wallets or keys, your funds are not involved in any way.
 
@@ -215,7 +215,7 @@ This pipeline is not meant to have an owner. Anyone with a synced node can run a
 3. Test it with `./build-snapshot.sh --dry-run` (add `--testnet` for testnet).
 4. Install the schedule below, with your own day of the month.
 
-Before doing anything, the script checks the newest release *for that chain*. If it is younger than 180 days (`MIN_AGE_DAYS`) or `MIN_AGE_DAYS` as set in your environment variables it exits without touching the node, and a fresh mainnet release never blocks a testnet build or the other way round. That makes shared scheduling safe: stagger each builder a few days apart (the 1st, the 3rd, the 5th), whoever fires first that quarter publishes, and everyone else's run sees the fresh release and stops. If the first builder's machine is dead that quarter, the next one picks it up automatically.
+Before doing anything, the script checks the newest release *for that chain*. If it is younger than 60 days (`MIN_AGE_DAYS`) it exits without touching the node, and a fresh mainnet release never blocks a testnet build or the other way round. That makes shared scheduling safe: stagger each builder a few days apart (the 1st, the 3rd, the 5th), whoever fires first that quarter publishes, and everyone else's run sees the fresh release and stops. If the first builder's machine is dead that quarter, the next one picks it up automatically.
 
 The node is only down for about the compression step: under 3 minutes for a 28GB mainnet chain on an M4 Mac mini, about 8 minutes for a 14GB testnet chain on a 4 core VPS. The upload afterwards runs with the node back up.
 
